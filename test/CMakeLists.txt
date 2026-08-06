@@ -59,16 +59,21 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
   set(OPTIONS -Wall -Wextra -Wshadow -pedantic-errors -Werror)
 
   # Clang 22+ treats __COUNTER__ as C2y extension; but doctest uses it
-  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "22.0")
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL
+                                               "22.0"
+  )
     set(OPTIONS ${OPTIONS} -Wno-c2y-extensions)
   endif()
 
   check_cxx_compiler_flag(-std=c++20 HAS_CPP20_FLAG)
   check_cxx_compiler_flag(-std=c++23 HAS_CPP23_FLAG)
 
-  # Clang 17 with libstdc++ 14 has a known bug in C++23 mode (tuple/get incompatibility)
-  # Skip C++23 tests for Clang 17.x to avoid compilation errors
-  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "17.0" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "18.0")
+  # Clang 17 with libstdc++ 14 has a known bug in C++23 mode (tuple/get incompatibility) Skip C++23
+  # tests for Clang 17.x to avoid compilation errors
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang"
+     AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "17.0"
+     AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "18.0"
+  )
     set(HAS_CPP23_FLAG FALSE)
     message(STATUS "Skipping C++23 tests for Clang 17 due to libstdc++ 14 incompatibility")
   endif()
@@ -76,15 +81,18 @@ endif()
 
 if(MAGIC_ENUM_USE_MODULES AND NOT MAGIC_ENUM_OPT_TEST_INSTALLED_VERSION)
 
-magic_enum_make_library(magic_enum_module_test-cpp${CMAKE_CXX_STANDARD}
-  "MAGIC_ENUM_CONFIG_FILE=\"${CMAKE_CURRENT_SOURCE_DIR}/magic_enum_test_config.hpp\""
-)
-magic_enum_make_library(magic_enum_module_test_aliases-cpp${CMAKE_CXX_STANDARD}
-  "MAGIC_ENUM_CONFIG_FILE=\"${CMAKE_CURRENT_SOURCE_DIR}/aliases.hpp\""
-)
-magic_enum_make_library(magic_enum_module_test_wchar_t-cpp${CMAKE_CXX_STANDARD}
-  "MAGIC_ENUM_CONFIG_FILE=\"${CMAKE_CURRENT_SOURCE_DIR}/magic_enum_wchar_t_test_config.hpp\""
-)
+  magic_enum_make_library(
+    magic_enum_module_test-cpp${CMAKE_CXX_STANDARD}
+    "MAGIC_ENUM_CONFIG_FILE=\"${CMAKE_CURRENT_SOURCE_DIR}/magic_enum_test_config.hpp\""
+  )
+  magic_enum_make_library(
+    magic_enum_module_test_aliases-cpp${CMAKE_CXX_STANDARD}
+    "MAGIC_ENUM_CONFIG_FILE=\"${CMAKE_CURRENT_SOURCE_DIR}/aliases.hpp\""
+  )
+  magic_enum_make_library(
+    magic_enum_module_test_wchar_t-cpp${CMAKE_CXX_STANDARD}
+    "MAGIC_ENUM_CONFIG_FILE=\"${CMAKE_CURRENT_SOURCE_DIR}/magic_enum_wchar_t_test_config.hpp\""
+  )
 
 endif()
 
@@ -118,15 +126,15 @@ endfunction()
 
 if(NOT MAGIC_ENUM_USE_MODULES)
 
-make_test(test.cpp test-cpp17 c++17)
-make_test(test_flags.cpp test_flags-cpp17 c++17)
-make_test(test_aliases.cpp test_aliases-cpp17 c++17)
-make_test(test_containers.cpp test_containers-cpp17 c++17)
-make_test(test_wchar_t.cpp test_wchar_t-cpp17 c++17)
+  make_test(test.cpp test-cpp17 c++17)
+  make_test(test_flags.cpp test_flags-cpp17 c++17)
+  make_test(test_aliases.cpp test_aliases-cpp17 c++17)
+  make_test(test_containers.cpp test_containers-cpp17 c++17)
+  make_test(test_wchar_t.cpp test_wchar_t-cpp17 c++17)
 
-if(MAGIC_ENUM_OPT_ENABLE_NONASCII)
-  make_test(test_nonascii.cpp test_nonascii-cpp17 c++17)
-endif()
+  if(MAGIC_ENUM_OPT_ENABLE_NONASCII)
+    make_test(test_nonascii.cpp test_nonascii-cpp17 c++17)
+  endif()
 
 endif()
 

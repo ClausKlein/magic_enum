@@ -7,8 +7,8 @@ file(READ "${objectsFile}" TARGET_OBJECTS)
 set(PROPERLY_JOINED_TARGET_OBJECTS "")
 
 foreach(objFullPath ${TARGET_OBJECTS})
-	get_filename_component(objFullPath "${objFullPath}" NAME)
-	list(APPEND PROPERLY_JOINED_TARGET_OBJECTS "${objFullPath}")
+  get_filename_component(objFullPath "${objFullPath}" NAME)
+  list(APPEND PROPERLY_JOINED_TARGET_OBJECTS "${objFullPath}")
 endforeach()
 list(JOIN PROPERLY_JOINED_TARGET_OBJECTS " " PROPERLY_JOINED_TARGET_OBJECTS)
 

@@ -1,10 +1,11 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.22...4.4)
 
 if(MAGIC_ENUM_USE_MODULES AND CMAKE_VERSION VERSION_LESS "3.28")
   message(FATAL_ERROR "MAGIC_ENUM_USE_MODULES requires CMake >= 3.28")
 endif()
 
 if(MAGIC_ENUM_USE_MODULES)
+  include(cmake/enable-experimental-import-std.cmake)
   if(NOT CMAKE_CXX_STANDARD)
     set(CMAKE_CXX_STANDARD 20)
   endif()
@@ -56,51 +57,51 @@ set(EXPORT_NAMESPACE "${PROJECT_NAME}::")
 
 function(magic_enum_make_library name)
 
-if(MAGIC_ENUM_USE_MODULES)
-  add_library(${name})
-  target_sources(${name}
-    PUBLIC
-      FILE_SET CXX_MODULES
-      BASE_DIRS "${MODULE}"
-      FILES "${MODULE}/magic_enum.cppm"
-    PUBLIC
-      FILE_SET HEADERS
-      BASE_DIRS "${INCLUDES}"
-      FILES
-        "${INCLUDES}/magic_enum.hpp"
-        "${INCLUDES}/magic_enum_all.hpp"
-        "${INCLUDES}/magic_enum_containers.hpp"
-        "${INCLUDES}/magic_enum_flags.hpp"
-        "${INCLUDES}/magic_enum_format.hpp"
-        "${INCLUDES}/magic_enum_fuse.hpp"
-        "${INCLUDES}/magic_enum_iostream.hpp"
-        "${INCLUDES}/magic_enum_switch.hpp"
-        "${INCLUDES}/magic_enum_utility.hpp"
-  )
-  target_compile_features(${name} PUBLIC cxx_std_20)
-  target_compile_definitions(${name}
-    PRIVATE ${ARGN}
-  )
-  set_target_properties(${name} PROPERTIES CXX_EXTENSIONS OFF)
-  if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.30" AND
-     CMAKE_CXX_STANDARD IN_LIST CMAKE_CXX_COMPILER_IMPORT_STD AND
-     CMAKE_CXX_MODULE_STD)
-    message("${name}: using import std")
-    target_compile_features(${name} PRIVATE cxx_std_23)
-    target_compile_definitions(${name} PRIVATE MAGIC_ENUM_USE_STD_MODULE)
+  if(MAGIC_ENUM_USE_MODULES)
+    add_library(${name})
+    target_sources(
+      ${name}
+      PUBLIC FILE_SET CXX_MODULES BASE_DIRS "${MODULE}" FILES "${MODULE}/magic_enum.cppm"
+      PUBLIC FILE_SET
+             HEADERS
+             BASE_DIRS
+             "${INCLUDES}"
+             FILES
+             "${INCLUDES}/magic_enum.hpp"
+             "${INCLUDES}/magic_enum_all.hpp"
+             "${INCLUDES}/magic_enum_containers.hpp"
+             "${INCLUDES}/magic_enum_flags.hpp"
+             "${INCLUDES}/magic_enum_format.hpp"
+             "${INCLUDES}/magic_enum_fuse.hpp"
+             "${INCLUDES}/magic_enum_iostream.hpp"
+             "${INCLUDES}/magic_enum_switch.hpp"
+             "${INCLUDES}/magic_enum_utility.hpp"
+    )
+    target_compile_features(${name} PUBLIC cxx_std_20)
+    target_compile_definitions(${name} PRIVATE ${ARGN})
+    set_target_properties(${name} PROPERTIES CXX_EXTENSIONS OFF)
+
+    if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.30"
+       AND CMAKE_CXX_STANDARD IN_LIST CMAKE_CXX_COMPILER_IMPORT_STD
+       AND CMAKE_CXX_MODULE_STD
+    )
+      message("${name}: using import std")
+      set_property(TARGET ${name} PROPERTY CXX_MODULE_STD ON)
+      target_compile_features(${name} PUBLIC cxx_std_23)
+      target_compile_definitions(${name} PUBLIC MAGIC_ENUM_USE_STD_MODULE)
+    endif()
+
+    set(_scope PUBLIC)
+  else()
+    add_library(${name} INTERFACE)
+    set(_scope INTERFACE)
   endif()
 
-  set(_scope PUBLIC)
-else()
-  add_library(${name} INTERFACE)
-  set(_scope INTERFACE)
-endif()
-
-add_library(${EXPORT_NAMESPACE}${name} ALIAS ${name})
-target_include_directories(
-  ${name} ${_scope} $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-)
+  add_library(${EXPORT_NAMESPACE}${name} ALIAS ${name})
+  target_include_directories(
+    ${name} ${_scope} $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+  )
 
 endfunction()
 
@@ -123,36 +124,34 @@ if(MAGIC_ENUM_OPT_INSTALL)
 
   if(NOT MAGIC_ENUM_USE_MODULES)
 
-  install(
-    TARGETS "${PROJECT_NAME}"
-    EXPORT ${PROJECT_NAME}
-    # COMPONENT "${SDK_COMPONENT_NAME}" # component is not allowed for includes!
-    # Headers are installed separately! Includes only marks the headers for export
-  )
+    install(TARGETS "${PROJECT_NAME}" EXPORT ${PROJECT_NAME}
+            # COMPONENT "${SDK_COMPONENT_NAME}" # component is not allowed for includes!
+            # Headers are installed separately! Includes only marks the headers for export
+    )
 
-  if(NOT DEFINED PROJECT_INCLUDE_HEADER_PATTERN)
-    set(PROJECT_INCLUDE_HEADER_PATTERN "*")
-  endif()
+    if(NOT DEFINED PROJECT_INCLUDE_HEADER_PATTERN)
+      set(PROJECT_INCLUDE_HEADER_PATTERN "*")
+    endif()
 
-  install(
-    DIRECTORY ${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME}
-    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
-    FILES_MATCHING
-    PATTERN "${PROJECT_INCLUDE_HEADER_PATTERN}"
-  )
+    install(
+      DIRECTORY ${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME}
+      DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+      FILES_MATCHING
+      PATTERN "${PROJECT_INCLUDE_HEADER_PATTERN}"
+    )
 
   else()
 
-  install(
-    TARGETS "${PROJECT_NAME}"
-    EXPORT ${PROJECT_NAME}
-    FILE_SET HEADERS
+    install(
+      TARGETS "${PROJECT_NAME}"
+      EXPORT ${PROJECT_NAME}
+      FILE_SET HEADERS
       DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}"
-    FILE_SET CXX_MODULES
+      FILE_SET CXX_MODULES
       DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}"
-    CXX_MODULES_BMI
+      CXX_MODULES_BMI
       DESTINATION ""
-  )
+    )
 
   endif()
 

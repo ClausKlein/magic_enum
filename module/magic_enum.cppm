@@ -1,16 +1,14 @@
 module;
 
 #include <version>
-#if __has_include(<fmt/format.h>)
-#  include <fmt/format.h>
-#endif
 
 #ifndef MAGIC_ENUM_USE_STD_MODULE
 
-#  include <compare>
-#  if __has_include(<format>)
-#    include <format>
-#  endif
+#if __has_include(<format>)
+#  include <format>
+#elif __has_include(<fmt/format.h>)
+#  include <fmt/format.h>
+#endif
 
 #  include <magic_enum/magic_enum.hpp>
 #  ifndef MAGIC_ENUM_USING_ALIAS_STRING

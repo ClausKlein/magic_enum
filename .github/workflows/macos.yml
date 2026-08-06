@@ -21,10 +21,16 @@ jobs:
     - uses: actions/checkout@v7
 
     - name: Configure
-      run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+      run: cmake -S . -B build -D CMAKE_BUILD_TYPE=${{ matrix.build_type }}
 
     - name: Build
       run: cmake --build build --parallel --config ${{ matrix.build_type }}
 
     - name: Test
       run: ctest --test-dir build --output-on-failure -C ${{ matrix.build_type }}
+
+    - name: Test CXX_MODULE with clang++
+      run: CXX=clang++ CMAKE_BUILD_TYPE=${{ matrix.build_type }} make && make test
+
+    - name: Test CXX_MODULE with g++-16
+      run: CXX=g++-16 CMAKE_BUILD_TYPE=${{ matrix.build_type }} make && make test
