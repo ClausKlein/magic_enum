@@ -116,7 +116,7 @@ function(magic_enum_make_module_test src target module_target)
       CXX_SCAN_FOR_MODULES ON
   )
   if(MAGIC_ENUM_MODULE_IMPORT_STD)
-    target_compile_definitions(${target} PRIVATE MAGIC_ENUM_TEST_IMPORT_STD)
+    # XXX target_compile_definitions(${target} PRIVATE MAGIC_ENUM_TEST_IMPORT_STD)
     set_property(TARGET ${target} PROPERTY CXX_MODULE_STD ON)
   endif()
   add_test(NAME ${target} COMMAND ${target})
@@ -254,4 +254,42 @@ if(MAGIC_ENUM_USE_MODULES AND MAGIC_ENUM_OPT_INSTALL AND
       ${CMAKE_CTEST_COMMAND} --output-on-failure --no-tests=error -C $<CONFIG>
   )
   set_tests_properties(installed-module-consumer PROPERTIES FIXTURES_REQUIRED magic_enum_installed_module)
+endif()
+
+if(NOT CMAKE_BUILD_TYPE STREQUAL "Release")
+    return()
+endif()
+
+#======================================================================
+# NOTE: Only for Release build with enabled install rules useful! CK
+#======================================================================
+if(MAGIC_ENUM_MODULE_IMPORT_STD AND MAGIC_ENUM_OPT_INSTALL AND NOT CMAKE_SKIP_INSTALL_RULES)
+    # test if the targets are usable from the install directory
+    add_test(
+        NAME install-to-stagedir
+        COMMAND
+            ${CMAKE_COMMAND} --install ${CMAKE_BINARY_DIR} --prefix
+            ${CMAKE_CURRENT_BINARY_DIR}/stagedir --config $<CONFIG>
+    )
+    add_test(
+        NAME find-package-test
+        COMMAND
+            ${CMAKE_CTEST_COMMAND} # --verbose
+            --output-on-failure -C $<CONFIG> #
+            --build-and-test "${CMAKE_SOURCE_DIR}/test/installed_module"
+            "${CMAKE_CURRENT_BINARY_DIR}/find-package-test" #
+            --build-generator ${CMAKE_GENERATOR} #
+            --build-makeprogram ${CMAKE_MAKE_PROGRAM} #
+            --build-options #
+            "-DMAGIC_ENUM_EXPECT_FMT=${MAGIC_ENUM_MODULE_WITH_FMT}"
+            "-DMAGIC_ENUM_EXPECT_IMPORT_STD=${MAGIC_ENUM_MODULE_IMPORT_STD}"
+            "-DCMAKE_BUILD_TYPE=$<CONFIG>"
+            "-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}"
+            "-DCMAKE_CXX_EXTENSIONS=${CMAKE_CXX_EXTENSIONS}"
+            "-DCMAKE_CXX_MODULE_STD=${CMAKE_CXX_MODULE_STD}"
+            "-DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}"
+            "-DCMAKE_CXX_STANDARD_REQUIRED=${CMAKE_CXX_STANDARD_REQUIRED}"
+            "-DCMAKE_PREFIX_PATH=${CMAKE_CURRENT_BINARY_DIR}/stagedir"
+            "-DCMAKE_EXPERIMENTAL_CXX_IMPORT_STD=${CMAKE_EXPERIMENTAL_CXX_IMPORT_STD}"
+    )
 endif()
