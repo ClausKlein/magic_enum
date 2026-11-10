@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.22...4.4)
+cmake_minimum_required(VERSION 3.22...4.5)
 
 if(MAGIC_ENUM_USE_MODULES AND CMAKE_VERSION VERSION_LESS "3.28")
   message(FATAL_ERROR "MAGIC_ENUM_USE_MODULES requires CMake >= 3.28")
@@ -39,7 +39,11 @@ unset(MAGIC_ENUM_VERIFY_INTERFACE_HEADER_SETS_DEFAULT)
 option(MAGIC_ENUM_USE_MODULES "Build the magic_enum C++20 module target" OFF)
 option(MAGIC_ENUM_MODULE_IMPORT_STD "Build the module target with import std" OFF)
 option(MAGIC_ENUM_MODULE_WITH_FMT "Build the module target with fmt::fmt integration" OFF)
-option(MAGIC_ENUM_OPT_INSTALL_PACKAGE_XML "Include package.xml when installing" ${MAGIC_ENUM_OPT_INSTALL})
+option(
+  MAGIC_ENUM_OPT_INSTALL_PACKAGE_XML
+  "Include package.xml when installing"
+  ${MAGIC_ENUM_OPT_INSTALL}
+)
 
 if(MAGIC_ENUM_MODULE_IMPORT_STD AND NOT MAGIC_ENUM_USE_MODULES)
   message(FATAL_ERROR "MAGIC_ENUM_MODULE_IMPORT_STD requires MAGIC_ENUM_USE_MODULES=ON")
@@ -47,12 +51,19 @@ endif()
 if(MAGIC_ENUM_MODULE_WITH_FMT AND NOT MAGIC_ENUM_USE_MODULES)
   message(FATAL_ERROR "MAGIC_ENUM_MODULE_WITH_FMT requires MAGIC_ENUM_USE_MODULES=ON")
 endif()
-option(MAGIC_ENUM_OPT_TEST_INSTALLED_VERSION "Test against an installed magic_enum CMake package" OFF)
-option(MAGIC_ENUM_OPT_TEST_INSTALLED_VERSION_PKGCONFIG "Test against an installed magic_enum pkg-config package" OFF)
+option(
+  MAGIC_ENUM_OPT_TEST_INSTALLED_VERSION
+  "Test against an installed magic_enum CMake package"
+  OFF
+)
+option(
+  MAGIC_ENUM_OPT_TEST_INSTALLED_VERSION_PKGCONFIG
+  "Test against an installed magic_enum pkg-config package"
+  OFF
+)
 
 set(MAGIC_ENUM_MODULE_CXX_STANDARD 20)
-if(DEFINED CMAKE_CXX_STANDARD AND
-   CMAKE_CXX_STANDARD GREATER MAGIC_ENUM_MODULE_CXX_STANDARD)
+if(DEFINED CMAKE_CXX_STANDARD AND CMAKE_CXX_STANDARD GREATER MAGIC_ENUM_MODULE_CXX_STANDARD)
   set(MAGIC_ENUM_MODULE_CXX_STANDARD ${CMAKE_CXX_STANDARD})
 endif()
 
@@ -65,16 +76,17 @@ endif()
 set(MAGIC_ENUM_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include/magic_enum")
 set(MAGIC_ENUM_MODULE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/module")
 set(MAGIC_ENUM_EXPORT_NAMESPACE "${PROJECT_NAME}::")
-set(MAGIC_ENUM_HEADERS
-    "${MAGIC_ENUM_INCLUDE_DIR}/magic_enum.hpp"
-    "${MAGIC_ENUM_INCLUDE_DIR}/magic_enum_all.hpp"
-    "${MAGIC_ENUM_INCLUDE_DIR}/magic_enum_containers.hpp"
-    "${MAGIC_ENUM_INCLUDE_DIR}/magic_enum_flags.hpp"
-    "${MAGIC_ENUM_INCLUDE_DIR}/magic_enum_format.hpp"
-    "${MAGIC_ENUM_INCLUDE_DIR}/magic_enum_fuse.hpp"
-    "${MAGIC_ENUM_INCLUDE_DIR}/magic_enum_iostream.hpp"
-    "${MAGIC_ENUM_INCLUDE_DIR}/magic_enum_switch.hpp"
-    "${MAGIC_ENUM_INCLUDE_DIR}/magic_enum_utility.hpp"
+set(
+  MAGIC_ENUM_HEADERS
+  "${MAGIC_ENUM_INCLUDE_DIR}/magic_enum.hpp"
+  "${MAGIC_ENUM_INCLUDE_DIR}/magic_enum_all.hpp"
+  "${MAGIC_ENUM_INCLUDE_DIR}/magic_enum_containers.hpp"
+  "${MAGIC_ENUM_INCLUDE_DIR}/magic_enum_flags.hpp"
+  "${MAGIC_ENUM_INCLUDE_DIR}/magic_enum_format.hpp"
+  "${MAGIC_ENUM_INCLUDE_DIR}/magic_enum_fuse.hpp"
+  "${MAGIC_ENUM_INCLUDE_DIR}/magic_enum_iostream.hpp"
+  "${MAGIC_ENUM_INCLUDE_DIR}/magic_enum_switch.hpp"
+  "${MAGIC_ENUM_INCLUDE_DIR}/magic_enum_utility.hpp"
 )
 
 add_library(${PROJECT_NAME} INTERFACE)
@@ -83,15 +95,14 @@ target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_17)
 if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.23")
   target_sources(
     ${PROJECT_NAME}
-    INTERFACE
-      FILE_SET HEADERS
-      BASE_DIRS "${PROJECT_SOURCE_DIR}/include"
-      FILES ${MAGIC_ENUM_HEADERS}
+    INTERFACE FILE_SET HEADERS BASE_DIRS "${PROJECT_SOURCE_DIR}/include" FILES ${MAGIC_ENUM_HEADERS}
   )
 else()
   target_include_directories(
-    ${PROJECT_NAME} INTERFACE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+    ${PROJECT_NAME}
+    INTERFACE
+      $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
   )
 endif()
 if(MAGIC_ENUM_OPT_VERIFY_INTERFACE_HEADER_SETS)
@@ -114,11 +125,12 @@ endif()
 function(magic_enum_make_module_library name)
   add_library(${name} STATIC)
   set_target_properties(${name} PROPERTIES CXX_EXTENSIONS OFF)
-  target_sources(${name}
+  target_sources(
+    ${name}
     PUBLIC
       FILE_SET CXX_MODULES
-      BASE_DIRS "${MAGIC_ENUM_MODULE_DIR}"
-      FILES "${MAGIC_ENUM_MODULE_DIR}/magic_enum.cppm"
+        BASE_DIRS "${MAGIC_ENUM_MODULE_DIR}"
+        FILES "${MAGIC_ENUM_MODULE_DIR}/magic_enum.cppm"
   )
   target_link_libraries(${name} PUBLIC ${PROJECT_NAME})
   target_compile_features(${name} PUBLIC cxx_std_${MAGIC_ENUM_MODULE_CXX_STANDARD})
@@ -141,8 +153,12 @@ function(magic_enum_make_module_library name)
     if(CMAKE_CXX_STANDARD LESS 23)
       message(FATAL_ERROR "MAGIC_ENUM_MODULE_IMPORT_STD requires CMAKE_CXX_STANDARD >= 23")
     endif()
+    if(CMAKE_CXX_STDLIB_MODULES_JSON AND CMAKE_VERSION VERSION_GREATER_EQUAL "4.5.0")
+      list(APPEND CMAKE_CXX_COMPILER_IMPORT_STD ${CMAKE_CXX_STANDARD})
+    endif()
     if(NOT CMAKE_CXX_STANDARD IN_LIST CMAKE_CXX_COMPILER_IMPORT_STD)
-      message(FATAL_ERROR
+      message(
+        FATAL_ERROR
         "MAGIC_ENUM_MODULE_IMPORT_STD is not supported for C++${CMAKE_CXX_STANDARD} by the active toolchain. "
         "Set CMAKE_EXPERIMENTAL_CXX_IMPORT_STD before project() and choose a supported standard."
       )
@@ -179,8 +195,7 @@ if(MAGIC_ENUM_OPT_INSTALL)
     install(
       TARGETS "${PROJECT_NAME}"
       EXPORT ${PROJECT_NAME}
-      FILE_SET HEADERS
-        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+      FILE_SET HEADERS DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
     )
   else()
     install(TARGETS "${PROJECT_NAME}" EXPORT ${PROJECT_NAME})
@@ -201,10 +216,8 @@ if(MAGIC_ENUM_OPT_INSTALL)
     install(
       TARGETS "${PROJECT_NAME}_module"
       EXPORT ${PROJECT_NAME}
-      FILE_SET CXX_MODULES
-        DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}"
-      CXX_MODULES_BMI
-        DESTINATION ""
+      FILE_SET CXX_MODULES DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}"
+      CXX_MODULES_BMI DESTINATION ""
     )
     list(APPEND MAGIC_ENUM_EXPORT_TARGETS "${PROJECT_NAME}_module")
   endif()
@@ -231,7 +244,10 @@ if(MAGIC_ENUM_OPT_INSTALL)
   set(MAGIC_ENUM_CMAKE_CONFIG_INSTALL_DIR "${CMAKE_INSTALL_DATAROOTDIR}/cmake/${PROJECT_NAME}")
   set(MAGIC_ENUM_TARGETS_FILE_BASENAME "${PROJECT_NAME}Targets.cmake")
   set(MAGIC_ENUM_CMAKE_CONFIG_FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake")
-  set(MAGIC_ENUM_CMAKE_CONFIG_VERSION_FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake")
+  set(
+    MAGIC_ENUM_CMAKE_CONFIG_VERSION_FILE
+    "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+  )
 
   set(MAGIC_ENUM_MODULE_EXPORT_ARGS)
   if(MAGIC_ENUM_USE_MODULES)
@@ -240,8 +256,9 @@ if(MAGIC_ENUM_OPT_INSTALL)
 
   set(MAGIC_ENUM_FIND_DEPENDENCIES)
   if(MAGIC_ENUM_MODULE_WITH_FMT)
-    string(APPEND MAGIC_ENUM_FIND_DEPENDENCIES
-           "if(NOT TARGET fmt::fmt)\n  find_dependency(fmt CONFIG)\nendif()\n"
+    string(
+      APPEND MAGIC_ENUM_FIND_DEPENDENCIES
+      "if(NOT TARGET fmt::fmt)\n  find_dependency(fmt CONFIG)\nendif()\n"
     )
   endif()
 
@@ -274,10 +291,12 @@ if(MAGIC_ENUM_OPT_INSTALL)
   write_basic_package_version_file(
     "${MAGIC_ENUM_CMAKE_CONFIG_VERSION_FILE}"
     VERSION ${PROJECT_VERSION}
-    COMPATIBILITY AnyNewerVersion ${MAGIC_ENUM_ARCH_INDEPENDENT}
+    COMPATIBILITY AnyNewerVersion
+    ${MAGIC_ENUM_ARCH_INDEPENDENT}
   )
-  install(FILES "${MAGIC_ENUM_CMAKE_CONFIG_FILE}" "${MAGIC_ENUM_CMAKE_CONFIG_VERSION_FILE}"
-          DESTINATION "${MAGIC_ENUM_CMAKE_CONFIG_INSTALL_DIR}"
+  install(
+    FILES "${MAGIC_ENUM_CMAKE_CONFIG_FILE}" "${MAGIC_ENUM_CMAKE_CONFIG_VERSION_FILE}"
+    DESTINATION "${MAGIC_ENUM_CMAKE_CONFIG_INSTALL_DIR}"
   )
 
   configure_pkg_config_file(
@@ -291,8 +310,9 @@ if(MAGIC_ENUM_OPT_INSTALL)
   )
 
   if(MAGIC_ENUM_OPT_INSTALL_PACKAGE_XML)
-    install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/package.xml"
-            DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}"
+    install(
+      FILES "${CMAKE_CURRENT_SOURCE_DIR}/package.xml"
+      DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}"
     )
   endif()
 
