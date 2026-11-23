@@ -22,7 +22,8 @@ build: GNUmakefile CMakeLists.txt ## Configure with cmake
 	cmake -G Ninja -S . -B build --fresh \
 	  -D CMAKE_SKIP_TEST_ALL_DEPENDENCY=NO -Wdeprecated -Wauthor -D MAGIC_ENUM_MODULE_WITH_FMT=ON \
 	  -D MAGIC_ENUM_MODULE_IMPORT_STD=OFF -D MAGIC_ENUM_USE_MODULES=ON -D CMAKE_CXX_STANDARD=20 \
-	  --debug-find-pkg=FMT --fresh
+	  -D CMAKE_PROJECT_TOP_LEVEL_INCLUDES=$(CURDIR)/cmake/find_fmt.cmake \
+	  --debug-find-pkg=fmt --fresh
 	ln -fs build/compile_commands.json .
 
 find-package-test: install ## Test installed module
